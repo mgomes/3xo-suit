@@ -3,8 +3,11 @@
 
 require 'net/http'
 require 'uri'
+require 'openssl'
 
-def read_url
+def extract_target_url
+  return ARGV[0] unless ARGV.empty?
+
   line = $stdin.gets
   return nil if line.nil?
 
@@ -19,45 +22,46 @@ rescue URI::InvalidURIError => e
 end
 
 def http_client(uri)
-  Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
-    http.open_timeout = 10
-    http.read_timeout = nil
-    yield http
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = uri.scheme == 'https'
+  http.open_timeout = 10
+  http.read_timeout = nil
+  if http.use_ssl?
+    store = OpenSSL::X509::Store.new
+    store.set_default_paths
+    http.cert_store = store
+    http.verify_mode = OpenSSL::SSL::VERIFY_PEER
   end
+  http.start { |client| yield client }
 end
 
 def jina_request(http, uri, api_key)
   request = Net::HTTP::Get.new(uri)
-  request['Accept'] = 'text/event-stream'
-  request['Authorization'] = "Bearer #{api_key}"
-  request['X-Respond-With'] = 'readerlm-v2'
+  request['Accept'] = 'text/plain'
+  request['X-Engine'] = 'readerlm-v2'
+  request['Authorization'] = "Bearer #{api_key}" if api_key
 
-  http.request(request) do |response|
-    unless response.is_a?(Net::HTTPSuccess)
-      warn "HTTP #{response.code} #{response.message}"
-      response.read_body { |chunk| warn chunk }
-      exit 1
-    end
-
-    response.read_body do |chunk|
-      $stdout.write(chunk)
-      $stdout.flush
-    end
+  response = http.request(request)
+  unless response.is_a?(Net::HTTPSuccess)
+    warn "HTTP #{response.code} #{response.message}"
+    response.read_body { |chunk| warn chunk }
+    exit 1
   end
+
+  body = response.body || ''
+  $stdout.write(body)
+  $stdout.flush
 end
 
 def main
-  target_url = read_url
+  target_url = extract_target_url
   if target_url.nil? || target_url.empty?
-    warn 'Missing URL on stdin'
+    warn 'Missing URL argument or stdin input'
     exit 1
   end
 
   api_key = ENV.fetch('JINA_API_KEY', nil)
-  if api_key.nil? || api_key.empty?
-    warn 'Missing JINA_API_KEY environment variable'
-    exit 1
-  end
+  api_key = nil if api_key.nil? || api_key.empty?
 
   uri = build_uri(target_url)
 
