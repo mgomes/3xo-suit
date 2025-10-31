@@ -1,0 +1,29 @@
+{
+  "name": "3xo-suit",
+  "version": "0.0.1",
+  "description": "My dot files for the AI era.",
+  "author": {
+    "name": "Mauricio Gomes",
+    "email": "mauricio@edge14.com",
+    "url": "https://mauriciogomes.com"
+  },
+  "homepage": "https://github.com/mgomes/3xo-suit",
+  "repository": "https://github.com/mgomes/3xo-suit",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "programming",
+    "go",
+    "ruby",
+    "rust",
+    "macOS",
+    "linux",
+    "satsolver",
+    "testing",
+    "software-architecture",
+    "mathematics",
+    "infrastucture",
+    "frontend",
+    "backend"
+  ]
+}
