@@ -6,7 +6,7 @@
   },
   "plugins": [
     {
-      "name": "Dotfiles",
+      "name": "dotfiles",
       "source": "./plugins/dotfiles"
     }
   ]
