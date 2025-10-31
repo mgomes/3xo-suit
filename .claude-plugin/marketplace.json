@@ -1,0 +1,13 @@
+{
+  "name": "3xo-suit",
+  "owner": {
+    "name": "3xo-suit",
+    "email": "mauricio@edge14.com"
+  },
+  "plugins": [
+    {
+      "name": "dotfiles",
+      "source": "./plugins/dotfiles"
+    }
+  ]
+}
