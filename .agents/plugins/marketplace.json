@@ -1,0 +1,20 @@
+{
+  "name": "3xo-suit",
+  "interface": {
+    "displayName": "3xo Suit"
+  },
+  "plugins": [
+    {
+      "name": "dotfiles",
+      "source": {
+        "source": "local",
+        "path": "./plugins/dotfiles"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
