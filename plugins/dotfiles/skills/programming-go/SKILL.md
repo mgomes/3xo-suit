@@ -82,6 +82,7 @@ func (wg *WaitGroup) Go(f func()) {
 
 - Don't silently discard operational errors. Log recoverable runtime failures at the boundary that handles them; only ignore errors that are truly unhelpful or impossible, and make that choice clear.
 - Use stdlib `log/slog` for new structured logs. Prefer context-aware calls and structured attributes such as `slog.Any("err", err)` over custom log writers or interpolated error strings.
+- Attribute your timeouts. Set deadlines with `context.WithTimeoutCause(ctx, d, cause)` (Go 1.21+) rather than `context.WithTimeout`, and read `context.Cause(ctx)` when a deadline fires. That turns a bare `context deadline exceeded` into an error that names *which* operation timed out and *how long* its budget was. The `cause` can be a sentinel you can `errors.Is` against to tell your own timeout apart from a parent's.
 
 ## HTTP servers
 
