@@ -138,7 +138,8 @@ _Don’t steal good names from the user_. Avoid giving a package a name that is 
 - Don't string-match errors in tests. Prefer `errors.Is` or `errors.As` with exported sentinel errors or concrete error types, especially when tests live outside the package.
 - Test helpers should accept `testing.TB`, not only `*testing.T`, so they work for tests, benchmarks, and fuzz targets.
 - Prefer external test packages, such as `package deployer_test`, when tests don't need unexported internals. This keeps package boundaries honest.
-- Avoid wall-clock sleeps and short timeouts in tests. Prefer deterministic synchronization or `testing/synctest` when time must advance.
+- Avoid wall-clock sleeps and short timeouts in tests. When production code uses real timers, deadlines, or goroutines, wrap the test in `synctest.Test` so virtual time and deterministic scheduling exercise the production path. Don't add injectable sleep or wait functions solely to make tests fast.
+- Keep `synctest` bubbles self-contained. Replace network sockets and external processes with in-process or fake transports so every blocked goroutine is controlled by the bubble.
 - Don't call `t.Fatal` or `FailNow` from goroutines or HTTP handler callbacks. Report with `t.Error` and return, or signal the test goroutine.
 - Use Go build tags for OS-specific test files instead of runtime OS guards when the file shouldn't build or run on other platforms.
 
