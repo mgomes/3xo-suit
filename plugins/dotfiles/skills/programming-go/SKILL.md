@@ -32,7 +32,20 @@ for i := 1; i <= 10; i++ {
 ## Types and configuration
 
 - Prefer concrete types. Avoid `any` and `map[string]any` in public or cross-package types when a more concrete type is possible. If an upstream JSON schema is still loose, define named wrapper types so the shape carries domain meaning.
-- Model finite command/config domains with concrete enum types so `switch` exhaustiveness checks catch missing cases.
+- Model finite string domains with integer enum types so `switch` exhaustiveness checks catch missing cases. Generate string, text, and JSON behavior with `github.com/dmarkham/enumer` instead of maintaining string constants and helper methods by hand:
+
+```go
+//go:generate go tool enumer -type=Materialization -json -text -linecomment
+type Materialization uint8
+
+const (
+    MaterializationCopy Materialization = iota // copy
+    MaterializationExtract                     // extract
+)
+```
+
+- Choose an enum's zero value deliberately: use the authored default when omission should select a valid value, or an explicit unknown value otherwise. Reuse generated validity, value-list, and marshaling methods instead of duplicating them.
+- Use constructors when defaults or invariants matter. Add functional options when callers need optional groups of fields instead of constructing a value and mutating it afterward.
 - Avoid brittle nil normalization spread through business logic. Canonicalize at comparison or boundary points, and reach for current Go features where they clarify intent, such as `new(false)` for bool pointers.
 - When passing config into lower layers, prefer a small interface implemented by the caller's config type over copying fields into another near-identical struct.
 - Keep user-facing configuration names provider-neutral when the provider detail can live behind a catalog, adapter, or backend-specific payload. Users should choose capabilities or abilities, not provider implementation paths.
@@ -51,8 +64,10 @@ for i := 1; i <= 10; i++ {
 
 ## Validation, paths, and errors
 
+- Use `github.com/go-playground/validator/v10` for declarative field and cardinality rules at boundaries. Keep relational rules such as duplicate names or overlapping paths explicit, then translate validator failures into the package's semantic errors.
 - Validate path-like configuration before deriving new paths from it. Reject surprising input — globs, traversal, empty values, absolute paths — at the boundary and return a semantic error instead of constructing paths from unchecked strings.
 - For validation failures that cross package boundaries, prefer exported concrete error types with fields and `Unwrap`/`Is` support so callers can inspect semantics.
+- Give finite validation problems a named enum, not free-form prose. Use small error constructors when several call sites must populate the same structured fields consistently.
 - Use structured parsing helpers such as `net.SplitHostPort` for host and port handling instead of ad hoc string splitting, especially where IPv6 is possible.
 
 ## Concurrency
@@ -131,6 +146,7 @@ _Don’t steal good names from the user_. Avoid giving a package a name that is 
 
 ## Testing
 
+- Build fixtures through domain constructors and functional options when those APIs encode defaults. This keeps tables compact and avoids `exhaustruct` or `funlen` suppressions caused by repetitive composite literals.
 - Use fixture files plus `embed` for non-trivial test inputs — TOML, SQL, JSON, request/response bodies. Avoid large inline fixture strings in test files.
 - Put bulky test helpers and fakes in separate `*_test.go` helper files when they obscure the tests. Keep the test cases themselves near the top and easy to scan.
 - Avoid `assert*` helpers that hide the expected behavior. Keep checks inline and left-aligned when that makes the happy path easier to scan.
